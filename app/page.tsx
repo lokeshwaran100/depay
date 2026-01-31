@@ -9,6 +9,8 @@ import Link from "next/link"
 import TransactionsList from "@/components/TransactionsList"
 import { revalidatePath } from "next/cache"
 
+import { DepositModal } from "@/components/DepositModal"
+
 export default async function Home() {
   const session = await getServerSession(authOptions)
 
@@ -76,9 +78,12 @@ export default async function Home() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <Button asChild>
-          <Link href="/send">Send Money</Link>
-        </Button>
+        <div className="flex gap-2">
+          <DepositModal address={user.wallet.address} />
+          <Button asChild>
+            <Link href="/send">Send Money</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
