@@ -25,6 +25,7 @@ export async function createWalletForUser(userId: string) {
         // 2. Create a Wallet in the Set
         // Using BASE-SEPOLIA (Testnet) as per robust development practice
         const walletsRes = await client.createWallets({
+            accountType: "SCA",  // Add this for Smart Contract Accounts
             blockchains: ["BASE-SEPOLIA"],
             // Retrying with 'MATIC-AMOY' or 'ETH-SEPOLIA' is safer for defaults. 
             // PRD asked for Base. The string is likely "BASE-SEPOLIA".
