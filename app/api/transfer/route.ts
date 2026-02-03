@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { createTransfer } from "@/lib/circle"
 import { NextResponse } from "next/server"
+import { sendEmail, paymentReceivedEmail, paymentSentEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
     try {
@@ -62,6 +63,33 @@ export async function POST(req: Request) {
                 txHash: tx?.id, // Store Circle ID in txHash for now or add circleTxId field
             },
         })
+
+        // 5. Send Email Notifications (async, non-blocking)
+        try {
+            // Notify recipient
+            const receivedTemplate = paymentReceivedEmail(
+                session.user.name || session.user.email || "Someone",
+                amount
+            )
+            await sendEmail({
+                to: email,
+                subject: receivedTemplate.subject,
+                html: receivedTemplate.html,
+            })
+
+            // Notify sender
+            if (session.user.email) {
+                const sentTemplate = paymentSentEmail(email, amount)
+                await sendEmail({
+                    to: session.user.email,
+                    subject: sentTemplate.subject,
+                    html: sentTemplate.html,
+                })
+            }
+        } catch (emailError) {
+            // Log but don't fail the transfer if emails fail
+            console.error("Failed to send notification emails:", emailError)
+        }
 
         return NextResponse.json({ success: true, txId: tx?.id })
     } catch (error) {

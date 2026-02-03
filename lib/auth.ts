@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { createWalletForUser } from "@/lib/circle"
+import { sendEmail, welcomeEmail } from "@/lib/email"
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -36,6 +37,20 @@ export const authOptions: NextAuthOptions = {
                     },
                 })
                 console.log("Wallet created for user:", user.email)
+
+                // Send welcome email
+                if (user.email) {
+                    try {
+                        const template = welcomeEmail(user.name || "there")
+                        await sendEmail({
+                            to: user.email,
+                            subject: template.subject,
+                            html: template.html,
+                        })
+                    } catch (emailError) {
+                        console.error("Failed to send welcome email:", emailError)
+                    }
+                }
             } catch (error) {
                 console.error("Failed to provision wallet:", error)
             }
