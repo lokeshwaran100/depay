@@ -6,23 +6,25 @@
 
 **Tagline:** Send crypto like email.
 
-**Summary:** DePay is a user-friendly payment platform that abstracts away the complexity of blockchain. Users can send and receive USDC using just an email address, with fully automated wallet provisioning and zero key management headaches.
+**Summary:** DePay lets anyone send USDC using just an email address—no wallets, no seed phrases, no gas confusion. We handle the blockchain complexity in the background so payments feel as simple as Venmo, but settle fully on-chain.
 
 ---
 
 ## 2. **Problem**
 
 **The Problem:**
-*   **Complexity:** Traditional crypto wallets require managing private keys, seed phrases, and gas fees, which is terrifying for new users.
+*   **Complexity:** Traditional crypto wallets require managing private keys, seed phrases, and gas fees, which is intimidating for new users.
 *   **UX Friction:** Sending money requires long, error-prone hexadecimal addresses (e.g., `0x71C...`). One typo means lost funds.
 *   **Onboarding:** Setting up a wallet and funding it with gas tokens typically takes multiple steps and apps.
 
 **Who experiences this:**
-*   Mainstream users who want to use stablecoins for payments but are intimidated by "Web3" complexity.
+*   Mainstream users who want to use USDC for payments but are intimidated by "Web3" complexity.
 *   Developers building apps who don't want to force users to install browser extensions.
 
 **Why existing solutions are insufficient:**
 Most wallets prioritize self-custody over usability, or centralized exchanges (CEXs) hold your funds but don't offer seamless peer-to-peer payments on-chain without withdrawals.
+
+Users are forced to choose between **self-custody with terrible UX** or **great UX with zero on-chain composability**. DePay sits in the middle.
 
 ---
 
@@ -30,7 +32,7 @@ Most wallets prioritize self-custody over usability, or centralized exchanges (C
 
 **Our Solution:**
 DePay uses **Circle's Developer-Controlled Wallets** to offer a hybrid experience:
-1.  **Invisible Wallets:** Users log in with their existing credentials (email/social). A fully functional on-chain wallet is automatically created for them in the background.
+1.  **Auto-Provisioned Wallets:** Users log in with their existing credentials (email/social). A fully functional on-chain wallet is automatically created for them in the background.
 2.  **Email-Based Transfers:** Users send money to an email address. The system resolves the recipient's wallet behind the scenes.
 3.  **Gasless Experience:** (Future/Planned) The platform handles gas fees, so users only worry about their USDC balance.
 
@@ -43,7 +45,7 @@ We treat the blockchain as a settlement layer, not a user interface. By mapping 
 
 *   **Instant Onboarding:** Sign up and get a wallet generated instantly.
 *   **Send via Email:** Transfer USDC to any registered user using just their email address.
-*   **USDC Native:** Optimized for stablecoin transactions on Base Sepolia.
+*   **USDC Native:** Optimized for USDC transactions on Base Sepolia.
 *   **Easy Deposits:** Simple QR code and copy-paste address for funding the account.
 *   **Transaction History:** Clear, readable integrated transaction logs combining on-chain status with user details.
 *   **Real-time Balance:** Instant visibility of wallet holdings.
@@ -53,6 +55,8 @@ We treat the blockchain as a settlement layer, not a user interface. By mapping 
 ## 5. **How It Works (System Overview)**
 
 The system acts as a smart orchestration layer between the User and the Blockchain.
+
+Think of DePay as a translation layer: **Email → Wallet → On-chain USDC transfer**.
 
 1.  **User Layer (Frontend):** Next.js application that provides a clean dashboard.
 2.  **Logic Layer (Backend API):** Handles authentication, user-to-wallet address resolution, and communicates with Circle's APIs.
@@ -99,7 +103,7 @@ The system acts as a smart orchestration layer between the User and the Blockcha
 
 **Status:** No Custom Smart Contracts.
 
-**Why?**
+**Design Decision**
 We leverage the standard **USDC** smart contract and Circle's wallet infrastructure. The complexity here is in the *orchestration* and *user experience*, not in custom on-chain logic. This reduces audit risk and standardizes security.
 
 ---
@@ -116,7 +120,7 @@ We leverage the standard **USDC** smart contract and Circle's wallet infrastruct
 
 ## 11. **Security Considerations**
 
-*   **Custody:** This is a custodial/semi-custodial model (Developer-Controlled). We (the developers) initiate transactions on behalf of users, but keys are secured by Circle utilizing MPC technology.
+*   **Custody:** This is a custodial/semi-custodial model (Developer-Controlled). We (the developers) initiate transactions on behalf of users, but keys are secured by Circle utilizing MPC technology. This model is ideal for payments, onboarding, and consumer apps where **UX > full self-custody**, similar to how people trust PayPal or Stripe today.
 *   **Authentication:** Strict reliance on NextAuth sessions ensures only the logged-in user can initiate transfers for their wallet.
 *   **Data:** User personal data (email) is stored securely and linked to wallet IDs, but never stored on-chain to preserve privacy.
 
@@ -186,16 +190,16 @@ We leverage the standard **USDC** smart contract and Circle's wallet infrastruct
 
 *   **Freelancer Payments:** Pay contractors globally in USDC without asking for complex wallet addresses.
 *   **Remittances:** Send money home to family members using just their email account.
-*   **eCommerce:** Simple checkout flow for merchants accepting stablecoins.
+*   **eCommerce:** Simple checkout flow for merchants accepting USDC.
 
 ---
 
 ## 16. **Roadmap / Future Improvements**
 
-*   **Gas Abstraction:** Implement a Paymaster to fully subsidize gas fees for users.
+*   **Gas Abstraction:** Implement a Paymaster to fully subsidize gas fees **so users never need ETH**.
 *   **Social Login:** Add Google/Apple sign-in for one-tap onboarding.
-*   **Off-Ramp:** Integration with banking rails to convert USDC to Fiat.
-*   **Notifications:** Email/Push notifications when you receive funds.
+*   **Off-Ramp:** Integration with banking rails **so DePay can replace bank transfers**.
+*   **Notifications:** Email/Push notifications **so it feels alive**.
 
 ---
 
