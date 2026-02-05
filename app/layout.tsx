@@ -1,31 +1,30 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Providers } from "@/components/Providers";
-import { Navbar } from "@/components/Navbar";
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { Providers } from "@/components/Providers"
+import { Navbar } from "@/components/Navbar"
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "DePay",
-  description: "Crypto payments as easy as email",
-};
+  title: "DePay - Send Crypto Like Email",
+  description: "The easiest way to send and receive crypto payments. No wallet addresses needed, just an email.",
+  keywords: ["crypto", "payments", "USDC", "email", "wallet", "blockchain"],
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className} suppressHydrationWarning={true}>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} antialiased`} suppressHydrationWarning={true}>
         <Providers>
           <Navbar />
-          <main className="container mx-auto py-8 px-4">
-            {children}
-          </main>
+          {children}
         </Providers>
       </body>
     </html>
-  );
+  )
 }
