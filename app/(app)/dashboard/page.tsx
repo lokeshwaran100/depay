@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { getWalletBalance, createWalletForUser } from "@/lib/circle"
+import { createWalletForUser, circle } from "@/lib/circle"
 import { revalidatePath } from "next/cache"
 import Link from "next/link"
 import { MobileOnly, DePayLogo } from "@/components/MobileOnly"
@@ -18,23 +18,33 @@ export default async function DashboardPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { wallet: true },
+        include: { wallets: true },
     })
 
-    if (!user || !user.wallet) {
-        // Attempt auto-recovery
-        if (user && !user.wallet) {
-            try {
-                console.log("Attempting to provision missing wallet for:", user.email)
-                const wallet = await createWalletForUser(user.id)
+    if (user && !user.onboardingCompleted) {
+        redirect("/setup")
+    }
 
-                await prisma.wallet.create({
-                    data: {
-                        userId: user.id,
-                        circleWalletId: wallet.id,
-                        address: wallet.address || "",
-                    },
-                })
+    if (!user || !user.wallets || user.wallets.length === 0) {
+        // Attempt auto-recovery
+        if (user && (!user.wallets || user.wallets.length === 0)) {
+            try {
+                console.log("Attempting to provision missing wallets for:", user.email)
+                // New multi-chain wallet creation
+                const wallets = await createWalletForUser(user.id)
+
+                await prisma.$transaction(
+                    wallets.map((w: any) =>
+                        prisma.wallet.create({
+                            data: {
+                                userId: user.id,
+                                circleWalletId: w.id,
+                                address: w.address || "",
+                                blockchain: w.blockchain,
+                            },
+                        })
+                    )
+                )
 
                 // Refresh the page
                 revalidatePath("/dashboard")
@@ -42,6 +52,7 @@ export default async function DashboardPage() {
             } catch (error) {
                 console.error("Auto-provisioning failed:", error)
                 return (
+                    // ... existing error UI ...
                     <MobileOnly>
                         <div className="min-h-screen bg-[var(--depay-bg)] flex items-center justify-center p-6">
                             <div className="text-center space-y-4">
@@ -77,15 +88,26 @@ export default async function DashboardPage() {
     }
 
     let balance = "0.00"
+    let chain = user.preferredChain || "BASE-SEPOLIA"
+
     try {
-        const balances = await getWalletBalance(user.wallet.circleWalletId)
-        console.log("user.wallet:", user.wallet)
-        // Find USDC balance
-        const usdc = balances.find((b: any) => b.token.symbol === "USDC")
-        balance = usdc ? usdc.amount : "0.00"
+        // Fetch balance for preferred chain only
+        const preferredWallet = user.wallets.find(w => w.blockchain === user.preferredChain) || user.wallets[0]
+
+        if (preferredWallet) {
+            const res = await circle.getWalletTokenBalance({ id: preferredWallet.circleWalletId })
+            const balances = res?.data?.tokenBalances || []
+            const usdc = balances.find((t: any) => t.token.symbol === "USDC")
+            balance = usdc ? parseFloat(usdc.amount).toFixed(2) : "0.00"
+            chain = preferredWallet.blockchain
+        }
+
     } catch (error) {
         console.error("Failed to fetch balance", error)
     }
+
+    // Determine primary address to show (based on preferredChain)
+    const primaryWallet = user.wallets.find(w => w.blockchain === user.preferredChain) || user.wallets[0]
 
     return (
         <MobileOnly>
@@ -116,15 +138,11 @@ export default async function DashboardPage() {
                     {/* Balance Card */}
                     <div className="card-balance rounded-3xl p-6 text-center">
                         <p className="text-xs uppercase tracking-wider text-[var(--depay-text-secondary)] mb-2">
-                            Total Balance
+                            Balance
                         </p>
                         <h2 className="text-4xl font-bold text-white mb-3">
                             ${balance} <span className="text-xl text-[var(--depay-text-secondary)]">USDC</span>
                         </h2>
-                        <div className="inline-flex items-center gap-2 badge-network">
-                            <span className="w-2 h-2 rounded-full bg-[var(--depay-success)]" />
-                            Base Sepolia Network
-                        </div>
                     </div>
 
                     {/* Action Buttons */}
@@ -139,7 +157,7 @@ export default async function DashboardPage() {
                             Send Money
                         </Link>
 
-                        <DepositModal address={user.wallet.address} />
+                        <DepositModal address={primaryWallet.address} chain={chain} />
                     </div>
 
                     {/* Recent Transactions */}

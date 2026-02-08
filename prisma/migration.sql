@@ -5,6 +5,8 @@ CREATE TABLE "User" (
     "email" TEXT,
     "emailVerified" DATETIME,
     "image" TEXT,
+    "preferredChain" TEXT NOT NULL DEFAULT 'BASE-SEPOLIA',
+    "onboardingCompleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -46,6 +48,7 @@ CREATE TABLE "VerificationToken" (
 CREATE TABLE "Wallet" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
+    "blockchain" TEXT NOT NULL,
     "circleWalletId" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     CONSTRAINT "Wallet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -58,6 +61,11 @@ CREATE TABLE "Transaction" (
     "recipientEmail" TEXT NOT NULL,
     "amount" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "transferType" TEXT NOT NULL DEFAULT 'SAME_CHAIN',
+    "sourceChain" TEXT,
+    "destChain" TEXT,
+    "depositTxHash" TEXT,
+    "withdrawTxHash" TEXT,
     "txHash" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Transaction_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -79,7 +87,7 @@ CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token"
 CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Wallet_userId_key" ON "Wallet"("userId");
+CREATE UNIQUE INDEX "Wallet_circleWalletId_key" ON "Wallet"("circleWalletId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Wallet_circleWalletId_key" ON "Wallet"("circleWalletId");
+CREATE UNIQUE INDEX "Wallet_userId_blockchain_key" ON "Wallet"("userId", "blockchain");

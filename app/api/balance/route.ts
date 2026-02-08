@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { getWalletBalance } from "@/lib/circle"
+import { circle } from "@/lib/circle"
 import { NextResponse } from "next/server"
 
 export async function GET() {
@@ -11,30 +11,36 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Get user's wallet
+        // Get user's wallets
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
-            include: { wallet: true },
+            include: { wallets: true },
         })
 
-        if (!user?.wallet) {
-            return NextResponse.json({ error: "Wallet not found" }, { status: 404 })
+        if (!user || !user.wallets || user.wallets.length === 0) {
+            return NextResponse.json({ balance: "0.00" })
         }
 
-        // Fetch balance from Circle
-        const tokenBalances = await getWalletBalance(user.wallet.circleWalletId)
+        // Get wallet for preferred chain
+        const preferredWallet = user.wallets.find(w => w.blockchain === user.preferredChain) || user.wallets[0]
 
-        // Find USDC balance (on Base Sepolia, the token address is 0x036CbD53842c5426634e7929541eC2318f3dCF7e)
-        const usdcBalance = tokenBalances.find(
-            (balance) => balance.token?.symbol === "USDC"
-        )
+        // Fetch balance from Circle
+        const res = await circle.getWalletTokenBalance({ id: preferredWallet.circleWalletId })
+        const tokenBalances = res?.data?.tokenBalances || []
+
+        // Find USDC balance
+        const usdcBalance = tokenBalances.find((balance: any) => balance.token?.symbol === "USDC")
 
         // Return balance in human-readable format
         const balance = usdcBalance?.amount || "0.00"
 
-        return NextResponse.json({ balance })
+        return NextResponse.json({
+            balance,
+            chain: preferredWallet.blockchain
+        })
     } catch (error) {
         console.error("Balance Error:", error)
         return NextResponse.json({ error: "Failed to fetch balance" }, { status: 500 })
     }
 }
+
