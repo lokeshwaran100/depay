@@ -1,0 +1,15 @@
+{
+  "walletSetId": "c09ae6e5-5402-5b4c-aa8d-3b5c4c7b94e9",
+  "wallets": [
+    {
+      "id": "b4d91ee6-7909-5c7a-a3c5-1557cfaf2fee",
+      "address": "0x4010e722678c927604b57fd9306014f9f912bc05",
+      "blockchain": "ARC-TESTNET"
+    },
+    {
+      "id": "2bd02b3d-d944-55c3-bc69-077970706a09",
+      "address": "0x4010e722678c927604b57fd9306014f9f912bc05",
+      "blockchain": "BASE-SEPOLIA"
+    }
+  ]
+}

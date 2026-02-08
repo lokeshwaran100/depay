@@ -1,5 +1,6 @@
 "use client"
 
+import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, Suspense } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
@@ -7,12 +8,17 @@ import { MobileOnly } from "@/components/MobileOnly"
 
 function ReviewContent() {
     const router = useRouter()
+    const { data: session } = useSession()
     const searchParams = useSearchParams()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
     const email = searchParams.get("email") || ""
     const amount = searchParams.get("amount") || "0.00"
+
+    // @ts-ignore
+    const network = session?.user?.preferredChain === "ARC-TESTNET" ? "Arc Testnet" : "Base Sepolia"
+
 
     const handleConfirm = async () => {
         setLoading(true)
@@ -94,7 +100,7 @@ function ReviewContent() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-[var(--depay-primary)]" />
-                                <span className="text-sm text-white font-medium">Base Sepolia</span>
+                                <span className="text-sm text-white font-medium">{network}</span>
                             </div>
                         </div>
 

@@ -10,8 +10,6 @@ export const circle = client
 export async function createWalletForUser(userId: string) {
     try {
         // 1. Create a Wallet Set for the user
-        // In a real app, you might use a single Wallet Set for all users or one per user.
-        // We'll create one per user for clear isolation.
         const walletSetRes = await client.createWalletSet({
             name: `User ${userId} Set`,
         })
@@ -22,22 +20,23 @@ export async function createWalletForUser(userId: string) {
 
         const walletSetId = walletSetRes.data.walletSet.id
 
-        // 2. Create a Wallet in the Set
-        // Using BASE-SEPOLIA (Testnet) as per robust development practice
+        // 2. Create Wallets on both chains
+        // Using refId ensures we get the SAME address on both EVM chains
         const walletsRes = await client.createWallets({
-            accountType: "SCA",  // Add this for Smart Contract Accounts
-            blockchains: ["BASE-SEPOLIA"],
-            // Retrying with 'MATIC-AMOY' or 'ETH-SEPOLIA' is safer for defaults. 
-            // PRD asked for Base. The string is likely "BASE-SEPOLIA".
+            accountType: "SCA",
+            blockchains: ["ARC-TESTNET", "BASE-SEPOLIA"],
             count: 1,
             walletSetId: walletSetId,
+            metadata: [
+                { refId: `user-${userId}` }
+            ]
         })
 
         if (!walletsRes.data?.wallets || walletsRes.data.wallets.length === 0) {
-            throw new Error("Failed to create Wallet")
+            throw new Error("Failed to create Wallets")
         }
 
-        return walletsRes.data.wallets[0]
+        return walletsRes.data.wallets
     } catch (error) {
         console.error("Circle Create Wallet Error:", error)
         throw error

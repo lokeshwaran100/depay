@@ -18,23 +18,33 @@ export default async function DashboardPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { wallet: true },
+        include: { wallets: true },
     })
 
-    if (!user || !user.wallet) {
-        // Attempt auto-recovery
-        if (user && !user.wallet) {
-            try {
-                console.log("Attempting to provision missing wallet for:", user.email)
-                const wallet = await createWalletForUser(user.id)
+    if (user && !user.onboardingCompleted) {
+        redirect("/setup")
+    }
 
-                await prisma.wallet.create({
-                    data: {
-                        userId: user.id,
-                        circleWalletId: wallet.id,
-                        address: wallet.address || "",
-                    },
-                })
+    if (!user || !user.wallets || user.wallets.length === 0) {
+        // Attempt auto-recovery
+        if (user && (!user.wallets || user.wallets.length === 0)) {
+            try {
+                console.log("Attempting to provision missing wallets for:", user.email)
+                // New multi-chain wallet creation
+                const wallets = await createWalletForUser(user.id)
+
+                await prisma.$transaction(
+                    wallets.map((w: any) =>
+                        prisma.wallet.create({
+                            data: {
+                                userId: user.id,
+                                circleWalletId: w.id,
+                                address: w.address || "",
+                                blockchain: w.blockchain,
+                            },
+                        })
+                    )
+                )
 
                 // Refresh the page
                 revalidatePath("/dashboard")
@@ -42,6 +52,7 @@ export default async function DashboardPage() {
             } catch (error) {
                 console.error("Auto-provisioning failed:", error)
                 return (
+                    // ... existing error UI ...
                     <MobileOnly>
                         <div className="min-h-screen bg-[var(--depay-bg)] flex items-center justify-center p-6">
                             <div className="text-center space-y-4">
@@ -76,16 +87,30 @@ export default async function DashboardPage() {
         )
     }
 
-    let balance = "0.00"
+    let totalBalance = "0.00"
+    let breakdown: Record<string, number> = {}
+
     try {
-        const balances = await getWalletBalance(user.wallet.circleWalletId)
-        console.log("user.wallet:", user.wallet)
-        // Find USDC balance
-        const usdc = balances.find((b: any) => b.token.symbol === "USDC")
-        balance = usdc ? usdc.amount : "0.00"
+        // Fetch Unified Balance
+        const walletIds = user.wallets.map(w => w.circleWalletId)
+        // Import dynamically or assume getUnifiedBalance is available
+        const { getUnifiedBalance } = await import("@/lib/gateway")
+        const balanceData = await getUnifiedBalance(walletIds)
+
+        totalBalance = balanceData.total.toFixed(2)
+
+        // Map breakdown by chain
+        user.wallets.forEach(w => {
+            const amount = balanceData.breakdown[w.circleWalletId] || 0
+            breakdown[w.blockchain] = amount
+        })
+
     } catch (error) {
         console.error("Failed to fetch balance", error)
     }
+
+    // Determine primary address to show (based on preferredChain)
+    const primaryWallet = user.wallets.find(w => w.blockchain === user.preferredChain) || user.wallets[0]
 
     return (
         <MobileOnly>
@@ -116,14 +141,19 @@ export default async function DashboardPage() {
                     {/* Balance Card */}
                     <div className="card-balance rounded-3xl p-6 text-center">
                         <p className="text-xs uppercase tracking-wider text-[var(--depay-text-secondary)] mb-2">
-                            Total Balance
+                            Unified Balance
                         </p>
                         <h2 className="text-4xl font-bold text-white mb-3">
-                            ${balance} <span className="text-xl text-[var(--depay-text-secondary)]">USDC</span>
+                            ${totalBalance} <span className="text-xl text-[var(--depay-text-secondary)]">USDC</span>
                         </h2>
-                        <div className="inline-flex items-center gap-2 badge-network">
-                            <span className="w-2 h-2 rounded-full bg-[var(--depay-success)]" />
-                            Base Sepolia Network
+
+                        <div className="flex justify-center gap-2 mt-4 text-xs text-[var(--depay-text-secondary)]">
+                            {Object.entries(breakdown).map(([chain, amount]) => (
+                                <div key={chain} className="bg-[var(--depay-bg-card)] px-3 py-1 rounded-full border border-[var(--depay-border)]">
+                                    <span className="font-semibold text-white">{chain === 'ARC-TESTNET' ? 'Arc' : 'Base'}: </span>
+                                    ${amount.toFixed(2)}
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -139,7 +169,7 @@ export default async function DashboardPage() {
                             Send Money
                         </Link>
 
-                        <DepositModal address={user.wallet.address} />
+                        <DepositModal address={primaryWallet.address} />
                     </div>
 
                     {/* Recent Transactions */}

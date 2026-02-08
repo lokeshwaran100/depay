@@ -55,7 +55,7 @@ export function DepositModal({ address }: DepositModalProps) {
                     {/* Network Badge */}
                     <div className="badge-network inline-flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[var(--depay-success)]" />
-                        BASE SEPOLIA NETWORK
+                        BASE SEPOLIA & ARC TESTNET
                     </div>
 
                     {/* QR Code Card */}
@@ -67,7 +67,7 @@ export function DepositModal({ address }: DepositModalProps) {
                     {/* Wallet Address */}
                     <div className="w-full bg-[var(--depay-bg-card)] rounded-2xl p-5 border border-[var(--depay-border)]">
                         <p className="text-xs text-[var(--depay-text-muted)] uppercase tracking-wider text-center mb-3">
-                            Wallet Address
+                            Unified Wallet Address
                         </p>
                         <p className="font-mono text-sm text-white text-center break-all leading-relaxed mb-4">
                             {address}
@@ -94,9 +94,10 @@ export function DepositModal({ address }: DepositModalProps) {
                     <div className="flex items-start gap-3 p-4 bg-[var(--depay-warning)]/10 border border-[var(--depay-warning)]/20 rounded-xl">
                         <span className="text-[var(--depay-warning)] text-lg">⚠️</span>
                         <p className="text-sm text-[var(--depay-text-secondary)]">
-                            Only send <span className="text-white font-semibold">USDC</span> via the{" "}
-                            <span className="text-white font-semibold">Base Sepolia</span> network to this address.
-                            Sending any other asset may result in permanent loss.
+                            Send <span className="text-white font-semibold">USDC</span> via{" "}
+                            <span className="text-white font-semibold">Base Sepolia</span> or{" "}
+                            <span className="text-white font-semibold">Arc Testnet</span> to this address.
+                            Sending other assets may result in permanent loss.
                         </p>
                     </div>
                 </div>
