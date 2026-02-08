@@ -40,49 +40,11 @@ interface DePayLogoProps {
 
 export function DePayLogo({ size = 40, className = "" }: DePayLogoProps) {
     return (
-        <div
-            className={`flex items-center justify-center rounded-xl bg-[var(--depay-primary)] ${className}`}
+        <img
+            src="/logo.png"
+            alt="DePay Logo"
+            className={`object-contain ${className}`}
             style={{ width: size, height: size }}
-        >
-            <svg
-                width={size * 0.6}
-                height={size * 0.6}
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                {/* Cube/box icon representing blockchain */}
-                <path
-                    d="M12 2L3 7V17L12 22L21 17V7L12 2Z"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M12 12L21 7"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M12 12V22"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M12 12L3 7"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-                {/* Dollar sign in center */}
-                <circle cx="12" cy="10" r="3" fill="white" fillOpacity="0.3" />
-            </svg>
-        </div>
+        />
     )
 }
