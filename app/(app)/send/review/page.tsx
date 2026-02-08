@@ -38,7 +38,7 @@ function ReviewContent() {
             }
 
             // Navigate to success page with transaction details
-            router.push(`/send/success?email=${encodeURIComponent(email)}&amount=${amount}&txId=${data.transactionId || ""}`)
+            router.push(`/send/success?email=${encodeURIComponent(email)}&amount=${amount}&txId=${data.txId || ""}`)
         } catch (err: any) {
             setError(err.message)
             setLoading(false)

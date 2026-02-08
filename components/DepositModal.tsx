@@ -92,14 +92,14 @@ export function DepositModal({ address, chain }: DepositModalProps) {
                     </div>
 
                     {/* Warning */}
-                    <div className="flex items-start gap-3 p-4 bg-[var(--depay-warning)]/10 border border-[var(--depay-warning)]/20 rounded-xl">
+                    {/* <div className="flex items-start gap-3 p-4 bg-[var(--depay-warning)]/10 border border-[var(--depay-warning)]/20 rounded-xl">
                         <span className="text-[var(--depay-warning)] text-lg">⚠️</span>
                         <p className="text-sm text-[var(--depay-text-secondary)]">
                             Send <span className="text-white font-semibold">USDC</span> via{" "}
                             <span className="text-white font-semibold">{chain === 'ARC-TESTNET' ? 'Arc Testnet' : 'Base Sepolia'}</span> to this address.
                             Sending other assets may result in permanent loss.
                         </p>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
