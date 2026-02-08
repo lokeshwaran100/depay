@@ -10,6 +10,29 @@ export const metadata: Metadata = {
   title: "DePay - Send Crypto Like Email",
   description: "The easiest way to send and receive crypto payments. No wallet addresses needed, just an email.",
   keywords: ["crypto", "payments", "USDC", "email", "wallet", "blockchain"],
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
+  openGraph: {
+    title: "DePay - Send Crypto Like Email",
+    description: "The easiest way to send and receive crypto payments. No wallet addresses needed, just an email.",
+    images: [
+      {
+        url: '/cover.png',
+        width: 1200,
+        height: 630,
+        alt: 'DePay - Send & Receive USDC via Email',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "DePay - Send Crypto Like Email",
+    description: "The easiest way to send and receive crypto payments. No wallet addresses needed, just an email.",
+    images: ['/cover.png'],
+  },
 }
 
 export default function RootLayout({
