@@ -45,7 +45,9 @@ We treat the blockchain as a settlement layer, not a user interface. By mapping 
 
 *   **Instant Onboarding:** Sign up and get a wallet generated instantly.
 *   **Send via Email:** Transfer USDC to any registered user using just their email address.
-*   **USDC Native:** Optimized for USDC transactions on Base Sepolia.
+*   **Multi-Chain Support:** Choose between **Base Sepolia** and **Arc Testnet** during onboarding.
+*   **Cross-Chain Transfers:** Send USDC seamlessly across chains—Arc to Base, Base to Arc—without manual bridging.
+*   **USDC Native:** Optimized for USDC transactions across supported networks.
 *   **Easy Deposits:** Simple QR code and copy-paste address for funding the account.
 *   **Transaction History:** Clear, readable integrated transaction logs combining on-chain status with user details.
 *   **Real-time Balance:** Instant visibility of wallet holdings.
@@ -83,9 +85,9 @@ Think of DePay as a translation layer: **Email → Wallet → On-chain USDC tran
 
 *   **Frontend:** Next.js 15 (App Router), Tailwind CSS, Shadcn UI, Lucide React.
 *   **Backend:** Next.js API Routes (Server Actions/API), Prisma ORM.
-*   **Database:** SQLite (Dev) / PostgreSQL (Prod).
-*   **Blockchain Infrastructure:** Circle Web3 Services (Developer-Controlled Wallets).
-*   **Network:** Base Sepolia Testnet.
+*   **Database:** SQLite (Dev) / Turso (libSQL) (Prod).
+*   **Blockchain Infrastructure:** Circle Web3 Services (Developer-Controlled Wallets, Gateway).
+*   **Networks:** Base Sepolia Testnet, **Arc Testnet**.
 *   **Auth:** NextAuth.js.
 
 ---
@@ -105,6 +107,69 @@ Think of DePay as a translation layer: **Email → Wallet → On-chain USDC tran
 
 **Design Decision**
 We leverage the standard **USDC** smart contract and Circle's wallet infrastructure. The complexity here is in the *orchestration* and *user experience*, not in custom on-chain logic. This reduces audit risk and standardizes security.
+
+---
+
+## 9.1 **Arc Testnet & Cross-Chain Integration**
+
+### Multi-Chain Architecture
+
+DePay supports **two blockchain networks**:
+| Network | USDC Contract | Use Case |
+|---------|---------------|----------|
+| **Base Sepolia** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | Primary testnet for USDC transfers |
+| **Arc Testnet** | `0x3600000000000000000000000000000000000000` | Alternative chain for cross-chain demo |
+
+### Wallet Creation
+
+When a user signs up, we create **wallets on both chains** using Circle's Developer-Controlled Wallets:
+
+```typescript
+const walletsRes = await client.createWallets({
+    accountType: "SCA",
+    blockchains: ["ARC-TESTNET", "BASE-SEPOLIA"],
+    count: 1,
+    walletSetId: walletSetId,
+});
+```
+
+The user selects their **preferred chain** during onboarding, which is stored in the database and used for routing transfers.
+
+### Cross-Chain Transfer Flow (Hub & Spoke Gateway)
+
+When a sender and recipient are on **different chains**, DePay automatically handles the cross-chain transfer:
+
+```
+[Sender on Arc] → Deposit to Gateway → [Gateway Wallet] → Withdraw to Recipient → [Recipient on Base]
+```
+
+**How it works:**
+1. **Deposit Phase:** User's USDC is transferred to the Gateway Wallet on the source chain (Arc)
+2. **Gateway Routing:** The Gateway holds liquidity on both chains
+3. **Withdraw Phase:** Gateway Wallet sends USDC to recipient on the destination chain (Base)
+
+```typescript
+// Deposit to Gateway (Source Chain)
+await depositToGateway(senderWallet.circleWalletId, amount, sourceChain);
+
+// Withdraw from Gateway (Destination Chain)  
+await withdrawFromGateway(amount, recipientWallet.address, destChain);
+```
+
+### Same-Chain vs Cross-Chain Decision
+
+The transfer API automatically detects if cross-chain routing is needed:
+
+```typescript
+if (sourceChain === destChain) {
+    // Direct transfer between wallets on same chain
+    await createTransfer(senderWallet, recipientWallet.address, amount);
+} else {
+    // Route through Gateway for cross-chain
+    await depositToGateway(...);
+    await withdrawFromGateway(...);
+}
+```
 
 ---
 
@@ -129,11 +194,13 @@ We leverage the standard **USDC** smart contract and Circle's wallet infrastruct
 ## 12. **What We Built**
 
 *   ✅ Full Authentication Flow
-*   ✅ Automated Wallet Provisioning via Circle
+*   ✅ Automated Wallet Provisioning via Circle (on both Arc Testnet & Base Sepolia)
 *   ✅ Dashboard with Real-time USDC Balance
 *   ✅ "Send to Email" Logic (Internal address resolution)
 *   ✅ Deposit Modal with QR Code
 *   ✅ Transaction History UI
+*   ✅ **Multi-Chain Support** (Arc Testnet & Base Sepolia)
+*   ✅ **Cross-Chain Transfers** via Circle Gateway
 
 ---
 
