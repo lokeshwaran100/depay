@@ -6,9 +6,10 @@ import { Copy, Check, ArrowLeft } from "lucide-react"
 
 interface DepositModalProps {
     address: string
+    chain: string
 }
 
-export function DepositModal({ address }: DepositModalProps) {
+export function DepositModal({ address, chain }: DepositModalProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [copied, setCopied] = useState(false)
 
@@ -55,7 +56,7 @@ export function DepositModal({ address }: DepositModalProps) {
                     {/* Network Badge */}
                     <div className="badge-network inline-flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[var(--depay-success)]" />
-                        BASE SEPOLIA & ARC TESTNET
+                        {chain === 'ARC-TESTNET' ? 'ARC TESTNET' : 'BASE SEPOLIA'}
                     </div>
 
                     {/* QR Code Card */}
@@ -95,8 +96,7 @@ export function DepositModal({ address }: DepositModalProps) {
                         <span className="text-[var(--depay-warning)] text-lg">⚠️</span>
                         <p className="text-sm text-[var(--depay-text-secondary)]">
                             Send <span className="text-white font-semibold">USDC</span> via{" "}
-                            <span className="text-white font-semibold">Base Sepolia</span> or{" "}
-                            <span className="text-white font-semibold">Arc Testnet</span> to this address.
+                            <span className="text-white font-semibold">{chain === 'ARC-TESTNET' ? 'Arc Testnet' : 'Base Sepolia'}</span> to this address.
                             Sending other assets may result in permanent loss.
                         </p>
                     </div>

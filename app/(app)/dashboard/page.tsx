@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { getWalletBalance, createWalletForUser } from "@/lib/circle"
+import { createWalletForUser, circle } from "@/lib/circle"
 import { revalidatePath } from "next/cache"
 import Link from "next/link"
 import { MobileOnly, DePayLogo } from "@/components/MobileOnly"
@@ -87,23 +87,20 @@ export default async function DashboardPage() {
         )
     }
 
-    let totalBalance = "0.00"
-    let breakdown: Record<string, number> = {}
+    let balance = "0.00"
+    let chain = user.preferredChain || "BASE-SEPOLIA"
 
     try {
-        // Fetch Unified Balance
-        const walletIds = user.wallets.map(w => w.circleWalletId)
-        // Import dynamically or assume getUnifiedBalance is available
-        const { getUnifiedBalance } = await import("@/lib/gateway")
-        const balanceData = await getUnifiedBalance(walletIds)
+        // Fetch balance for preferred chain only
+        const preferredWallet = user.wallets.find(w => w.blockchain === user.preferredChain) || user.wallets[0]
 
-        totalBalance = balanceData.total.toFixed(2)
-
-        // Map breakdown by chain
-        user.wallets.forEach(w => {
-            const amount = balanceData.breakdown[w.circleWalletId] || 0
-            breakdown[w.blockchain] = amount
-        })
+        if (preferredWallet) {
+            const res = await circle.getWalletTokenBalance({ id: preferredWallet.circleWalletId })
+            const balances = res?.data?.tokenBalances || []
+            const usdc = balances.find((t: any) => t.token.symbol === "USDC")
+            balance = usdc ? parseFloat(usdc.amount).toFixed(2) : "0.00"
+            chain = preferredWallet.blockchain
+        }
 
     } catch (error) {
         console.error("Failed to fetch balance", error)
@@ -141,20 +138,11 @@ export default async function DashboardPage() {
                     {/* Balance Card */}
                     <div className="card-balance rounded-3xl p-6 text-center">
                         <p className="text-xs uppercase tracking-wider text-[var(--depay-text-secondary)] mb-2">
-                            Unified Balance
+                            Balance
                         </p>
                         <h2 className="text-4xl font-bold text-white mb-3">
-                            ${totalBalance} <span className="text-xl text-[var(--depay-text-secondary)]">USDC</span>
+                            ${balance} <span className="text-xl text-[var(--depay-text-secondary)]">USDC</span>
                         </h2>
-
-                        <div className="flex justify-center gap-2 mt-4 text-xs text-[var(--depay-text-secondary)]">
-                            {Object.entries(breakdown).map(([chain, amount]) => (
-                                <div key={chain} className="bg-[var(--depay-bg-card)] px-3 py-1 rounded-full border border-[var(--depay-border)]">
-                                    <span className="font-semibold text-white">{chain === 'ARC-TESTNET' ? 'Arc' : 'Base'}: </span>
-                                    ${amount.toFixed(2)}
-                                </div>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Action Buttons */}
@@ -169,7 +157,7 @@ export default async function DashboardPage() {
                             Send Money
                         </Link>
 
-                        <DepositModal address={primaryWallet.address} />
+                        <DepositModal address={primaryWallet.address} chain={chain} />
                     </div>
 
                     {/* Recent Transactions */}
