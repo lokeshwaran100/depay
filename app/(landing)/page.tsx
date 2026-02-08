@@ -110,8 +110,8 @@ export default function LandingPage() {
                         {[
                             {
                                 icon: "🔗",
-                                title: "Connect Wallet",
-                                description: "Securely link your preferred non-custodial wallet. We support MetaMask, Phantom, and WalletConnect."
+                                title: "Sign In with Google",
+                                description: "Use your Google account to sign in."
                             },
                             {
                                 icon: "✉️",
@@ -121,7 +121,7 @@ export default function LandingPage() {
                             {
                                 icon: "➤",
                                 title: "Send Funds",
-                                description: "Confirm and send. The recipient receives a magic link to claim funds directly into their own wallet."
+                                description: "Confirm and send. The recipient receives funds in their wallet linked to their email."
                             }
                         ].map((step, index) => (
                             <div key={index} className="bg-[var(--depay-bg-card)] border border-[var(--depay-border)] rounded-2xl p-6 hover:border-[var(--depay-primary)]/30 transition-colors">
